@@ -168,7 +168,7 @@ public class MainActivity extends Activity {
             super.onPreExecute();
             // Showing progress dialog
             mDialog = new ProgressDialog(MainActivity.this);
-            if(MainActivity.this.isFinishing() || MainActivity.this.isDestroyed()){
+            if(MainActivity.this.isFinishing()){
             	this.cancel(false);
             	return;
             }
@@ -225,7 +225,7 @@ public class MainActivity extends Activity {
             super.onPostExecute(result);
 
             //Dismiss the progress dialog
-            if (mDialog.isShowing())
+    		if (mDialog!= null && mDialog.isShowing())
                 mDialog.dismiss();
             
             ListAdapter adapter = new UserContentAdapter(ctx, R.layout.listitem, rowDataList);
@@ -237,7 +237,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		if (mDialog.isShowing())
+		if (mDialog!= null && mDialog.isShowing())
             mDialog.dismiss();
 	}
 }

@@ -84,7 +84,7 @@ public class ImageDownloader {
             bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
             //if there was no exception but bitmap is still null, tring retrieving bitmap using legacy httpClient
             if(bitmap==null)
-            	bitmap = retryDownloadWithUrlConnection(url);
+            	bitmap = retryDownloadWithHttpClient(url);
             //scale the bitmap to a predefined size
             bitmap = scaleBitmap(bitmap);
             
@@ -154,7 +154,7 @@ public class ImageDownloader {
      * @param url url to download image from
      * @return Downloaded bitmap
      */
-	private Bitmap retryDownloadWithUrlConnection(String url){
+	private Bitmap retryDownloadWithHttpClient(String url){
 		
 		HttpGet getRequest = null;
 		Bitmap bitmap = null;
