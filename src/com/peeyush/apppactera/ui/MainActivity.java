@@ -35,6 +35,7 @@ import android.provider.SyncStateContract.Constants;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -70,7 +71,7 @@ public class MainActivity extends Activity {
 		      @Override
 		      public void onRefresh() {
 		    	  
-		    	  refreshData(mRefreshLayout);			
+		    	  refreshData();			
 		      }
 		  });
         
@@ -112,28 +113,25 @@ public class MainActivity extends Activity {
 
     /**
      * Called on pull to refresh. Cleans all the data and re-requests it
-     * @param reference to CustomSwipeRefreshLayout
      */
-    protected void refreshData(final CustomSwipeRefreshLayout refreshLayout) {
+    protected void refreshData() {
 
     	if(!isInternetEnabled()){
     		Toast.makeText(ctx, getString(R.string.retry_check_connection), Toast.LENGTH_SHORT).show();
-        	refreshLayout.setRefreshing(false);
+    		mRefreshLayout.setRefreshing(false);
     		return;
     	}
     	
     	try {
-			refreshLayout.setRefreshing(true);
+    		mRefreshLayout.setRefreshing(true);
 			ImageDownloadManager.getInstance().resetImageManager();
 			Preferences.getInstance(ctx).setValue(ApplicationConstants.JSONKEY_USER_CONTENT, null);
-			rowDataList.clear();
 			
 		} catch (Exception e) {
 			Log.e(TAG, "refreshData: " + "\n" + e.getMessage());
 		}
 
-		getData(getString(R.string.refreshing_data));
-		refreshLayout.setRefreshing(false);
+		getData(null);
 	}
     
     /**
@@ -159,6 +157,7 @@ public class MainActivity extends Activity {
 	private class GetDataTask extends AsyncTask<Void, Void, Void> {
     	 
 		String mMessage;
+		List<RowData> tempRowDataList = new ArrayList<RowData>();
 		GetDataTask(String message){
 			mMessage = message;
 		}
@@ -167,14 +166,16 @@ public class MainActivity extends Activity {
         protected void onPreExecute() {
             super.onPreExecute();
             // Showing progress dialog
-            mDialog = new ProgressDialog(MainActivity.this);
-            if(MainActivity.this.isFinishing()){
-            	this.cancel(false);
-            	return;
+            if(mMessage!=null){
+	            mDialog = new ProgressDialog(MainActivity.this);
+	            if(MainActivity.this.isFinishing()){
+	            	this.cancel(false);
+	            	return;
+	            }
+	            mDialog.setMessage(mMessage);
+	            mDialog.setCancelable(false);
+	            mDialog.show();
             }
-            mDialog.setMessage(mMessage);
-            mDialog.setCancelable(false);
-            mDialog.show();
         }
  
         @Override
@@ -207,7 +208,7 @@ public class MainActivity extends Activity {
                         
                         //add the data to the list if title exists (treating title as primary key)
                         if(!title.equals("null"))
-                        	rowDataList.add(new RowData(title, desc.equals("null")?null:desc, imageUrl.equals("null")?null:imageUrl));
+                        	tempRowDataList.add(new RowData(title, desc.equals("null")?null:desc, imageUrl.equals("null")?null:imageUrl));
                         
                     }
                 } catch (JSONException e) {
@@ -224,16 +225,25 @@ public class MainActivity extends Activity {
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
 
+            if(mRefreshLayout!=null && mRefreshLayout.isRefreshing())
+            	mRefreshLayout.setRefreshing(false);
             //Dismiss the progress dialog
     		if (mDialog!= null && mDialog.isShowing())
                 mDialog.dismiss();
-            
-            ListAdapter adapter = new UserContentAdapter(ctx, R.layout.listitem, rowDataList);
+    		rowDataList.clear();
+    		rowDataList.addAll(tempRowDataList);
+            if(mAdapter==null){
+            	mAdapter = new UserContentAdapter(ctx, R.layout.listitem, rowDataList);
+            	mListView.setAdapter(mAdapter);
+            }
+            else
+            	((BaseAdapter)mAdapter).notifyDataSetChanged();
             //set activity title
             setTitle(pageTitle);
-            mListView.setAdapter(adapter);
+            
         }
     }
+	ListAdapter mAdapter = null;
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();

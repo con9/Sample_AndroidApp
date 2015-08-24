@@ -1,6 +1,7 @@
 package com.peeyush.apppactera.data;
 
 import java.io.File;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -179,7 +180,7 @@ public class ImageDownloadManager {
 				
 				bitmap = new ImageDownloader().downloadBitmap(url);
 				//we will keep null bitmaps(wrapped due to imageCache being a ConcurrentHashMap) as well to avoid re-requesting every-time view is drawn
-				imageCache.put(url, new BitmapWrapper(bitmap));
+				imageCache.put(url, new BitmapWrapper(new SoftReference<Bitmap>(bitmap)));
 			} catch (Exception e) {
 				Log.e(TAG, "doInBackground: " + e.getMessage());
 			}
@@ -232,14 +233,14 @@ public class ImageDownloadManager {
 	 */
 	private class BitmapWrapper{
 		
-		private Bitmap mBitmap;
+		private SoftReference<Bitmap> mBitmapRef;
 		
-		BitmapWrapper(Bitmap bitmap){
-			mBitmap = bitmap;
+		BitmapWrapper(SoftReference<Bitmap> bitmap){
+			mBitmapRef = bitmap;
 		}
 
 		public Bitmap getBitmap() {
-			return mBitmap;
+			return mBitmapRef.get();
 		}
 	}
 

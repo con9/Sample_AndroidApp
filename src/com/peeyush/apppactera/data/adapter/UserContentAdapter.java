@@ -69,12 +69,22 @@ public class UserContentAdapter extends BaseAdapter implements ImageResponseDele
 		if(mlistView==null)
 			mlistView = (ListView)parent;
 		final ViewHolder holder;
+
+		if(mRowDataList.size()<=position){
+			
+			//incase adapter data was being reset and getView calls a previous position, 
+			//return a dummy view and with a null tag
+			convertView = new View(mContext);
+			convertView.setVisibility(View.GONE);
+			convertView.setTag(null);
+			return convertView;
+		}
 		if (convertView != null && convertView.getTag() != null) {
 			holder = (ViewHolder) convertView.getTag();
 		}
 		else
 		{
-			if (convertView == null) {
+			if (convertView == null || convertView.getTag() == null) {
 				LayoutInflater inflater = ((Activity) mContext)
 						.getLayoutInflater();
 				convertView = inflater.inflate(layoutID, null);
@@ -86,6 +96,7 @@ public class UserContentAdapter extends BaseAdapter implements ImageResponseDele
 			holder.image = (ImageView) convertView.findViewById(R.id.image);
 			convertView.setTag(holder);
 		}
+		convertView.setVisibility(View.VISIBLE);
 		RowData rowData = mRowDataList.get(position);
 		holder.image.setTag(rowData.getImageUrl());
 		holder.image.setImageDrawable(null);
